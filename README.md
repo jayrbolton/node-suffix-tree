@@ -9,84 +9,15 @@ You can can check whether a string is a substring of another, whether a string i
 ## Usage
 
 ```js
-var suffixTree = require('@jayrbolton/suffix-tree')
-var tree = suffixTree.create('banana')
-var suffixIndex = tree.findSuffix('ana') // -> 3
-var substringIndex = tree.findSubstring('ana') // -> 1
-var occurrences = tree.occurrences('ana') // -> 2
-var longestRepeating = tree.longestRepeating() // -> 'ana'
+var STree = require('@jayrbolton/suffix-tree')
+var tree = STree.create('banana')
+var suffixIndex = STree.findSuffix('ana') // -> 3
+var substringIndex = STree.findSubstring('ana') // -> 1
+var occurrences = STree.occurrences('ana') // -> 2
+var longestRepeating = STree.longestRepeating() // -> 'ana'
 ```
 
 ## API
-
-### Data structure
-
-A suffix tree is simple object where each key is a character in the string, and each value is a nested tree or a leaf. The end of the string is denoted '$'. A leaf holds the index of the start of any substrings that you can get by following a path in the tree to that leaf.
-
-A suffix tree of "banana":
-
-```js
-banana
-const bananaTree = {
-  _conent: 'banana',
-  0: {'$': 0}, // 'banana$'
-  1: { // 'a'
-    '$': 5, // 'nana'
-    2: { //
-      '$': 3,
-      4: 1
-    }
-  }
-  2
-  na: {
-    '$': 4,
-    'na$': 2
-  }
-}
-```
-
-For example, if you follow the suffix 'nana' from the root, you will end up at the leaf labeled '2', meaning 'nana' is a vlaid suffix starting at index 2.
-
-The tree's memory storage is `Theta(n)`
-
-Check out this cool visualization of the tree-building algorithm: http://brenden.github.io/ukkonen-animation/
-
-### create(string)
-
-Takes a string and returns a suffix tree (see "Data structure" above)
-
-This function's peformance is O(n) and memory usage is also O(n) using Ukkonen's algorithm.
-
-```js
-var suffixTree = require('suffix-tree')
-
-var tree = suffixTree.create('banana')
-```
-
-### findSuffix(string, tree), tree.findSuffix(string)
-
-Returns the index of the suffix for a given string. Returns -1 if the substring is not found, similar to `indexOf`.
-
-This runs {{{
-
-```js
-var tree = suffixTree.create('banana')
-var index = tree.findSuffix('nana') // -> 2
-var index2 = tree.findSuffix('ana') // -> 3
-var index3 = tree.findSuffix('xyz') // -> -1
-```
-
-### findSubstring(string, tree), tree.findSubstring(string)
-
-Find a substring within a suffix tree. Returns the index of the substring's start position, or returns -1 if it is not found, similar to `indexOf`.
-
-### occurrences(string, tree), tree.occurrences(string)
-
-Find the number of occurrences of a substring in a suffix tree.
-
-### longestRepeating(tree)
-
-Find the longest repeating substring in a suffix tree.
 
 ## Install
 
