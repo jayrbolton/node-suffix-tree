@@ -1,12 +1,14 @@
 {
-  "name": "suffix-tree",
+  "name": "@jayrbolton/suffix-tree",
   "version": "0.0.1",
   "description": "A suffix tree string matching algorithm implementation in node",
   "main": "index.js",
   "directories": {
     "test": "test"
   },
-  "dependencies": {},
+  "dependencies": {
+    "debug": "3.1.0"
+  },
   "devDependencies": {
     "common-readme": "^1.1.0",
     "dependency-check": "^3.0.0",
