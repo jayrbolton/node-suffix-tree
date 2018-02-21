@@ -41,7 +41,6 @@ test('on tctcatcaa#ggaaccattg@tccatctcgc$', function (t) {
   const str = 'tctcatcaa#ggaaccattg@tccatctcgc$'
   const tree = STree.create(str)
   testSuffixes(tree, str, t)
-  console.log(STree.format(tree))
   t.end()
 })
 
@@ -77,9 +76,9 @@ test('on abcabcdefbcabcd$', function (t) {
 function testSuffixes (tree, str, t) {
   const suffixes = STree.allSuffixes(tree).sort(sortSuffixes)
   t.strictEqual(suffixes.length, str.length)
-  console.log(suffixes)
   suffixes.forEach(function (suff, idx) {
-    t.strictEqual(suff, str.slice(str.length - idx - 1))
+    let correct = str.slice(str.length - idx - 1)
+    t.strictEqual(suff, correct, suff + ' vs ' + correct)
   })
 }
 
