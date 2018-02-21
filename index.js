@@ -10,6 +10,7 @@ STree.create = function create (str) {
     right: -1,
     left: -1,
     skip: 0,
+    total: 0,
     root,
     text: '',
     _tag: 'STree'
@@ -23,6 +24,9 @@ STree.create = function create (str) {
 
 // Add a new string to the tree
 STree.add = function add (str, tree) {
+  // Append the null character plus the idx of this string
+  str += '\0'
+  tree.total += 1
   // Add a multi-character string
   for (let i = 0; i < str.length; ++i) {
     STree.addChar(str[i], tree)

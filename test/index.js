@@ -1,72 +1,72 @@
 const STree = require('..')
 const test = require('tape')
 
-test('on xyzxyaxyz$', function (t) {
-  const str = 'xyzxyaxyz$'
+test('on xyzxyaxyz', function (t) {
+  const str = 'xyzxyaxyz'
+  const tree = STree.create(str)
+  console.log(STree.format(tree))
+  testSuffixes(tree, str, t)
+  t.end()
+})
+
+test('on banana', function (t) {
+  const str = 'banana'
   const tree = STree.create(str)
   testSuffixes(tree, str, t)
   t.end()
 })
 
-test('on banana$', function (t) {
-  const str = 'banana$'
+test('on abacabadabacabae', function (t) {
+  const str = 'abacabadabacabae'
   const tree = STree.create(str)
   testSuffixes(tree, str, t)
   t.end()
 })
 
-test('on abacabadabacabae$', function (t) {
-  const str = 'abacabadabacabae$'
+test('on asdfsfasdfasdfx', function (t) {
+  const str = 'asdfsfasdfasdfx'
   const tree = STree.create(str)
   testSuffixes(tree, str, t)
   t.end()
 })
 
-test('on asdfsfasdfasdfx$', function (t) {
-  const str = 'asdfsfasdfasdfx$'
+test('on aaaaaaa', function (t) {
+  const str = 'aaaaaaaa'
   const tree = STree.create(str)
   testSuffixes(tree, str, t)
   t.end()
 })
 
-test('on aaaaaaa$', function (t) {
-  const str = 'aaaaaaaa$'
+test('on tctcatcaa#ggaaccattg@tccatctcgc', function (t) {
+  const str = 'tctcatcaa#ggaaccattg@tccatctcgc'
   const tree = STree.create(str)
   testSuffixes(tree, str, t)
   t.end()
 })
 
-// TODO
-test('on tctcatcaa#ggaaccattg@tccatctcgc$', function (t) {
-  const str = 'tctcatcaa#ggaaccattg@tccatctcgc$'
+test('on abababa', function (t) {
+  const str = 'abababa'
   const tree = STree.create(str)
   testSuffixes(tree, str, t)
   t.end()
 })
 
-test('on abababa$', function (t) {
-  const str = 'abababa$'
+test('on abcabcdefbcabcd', function (t) {
+  const str = 'abcabcdefbcabcd'
   const tree = STree.create(str)
   testSuffixes(tree, str, t)
   t.end()
 })
 
-test('on abcabcdefbcabcd$', function (t) {
-  const str = 'abcabcdefbcabcd$'
+test('on abcabcdefhabcabcdw', function (t) {
+  const str = 'abcabcdefhabcabcdw'
   const tree = STree.create(str)
   testSuffixes(tree, str, t)
   t.end()
 })
 
-test('on abcabcdefhabcabcdw$', function (t) {
-  const str = 'abcabcdefhabcabcdw$'
-  const tree = STree.create(str)
-  testSuffixes(tree, str, t)
-  t.end()
-})
-
-test('on abcabcdefbcabcd$', function (t) {
-  const str = 'abcabcdefbcabcd$'
+test('on abcabcdefbcabcd', function (t) {
+  const str = 'abcabcdefbcabcd'
   const tree = STree.create(str)
   testSuffixes(tree, str, t)
   t.end()
@@ -74,6 +74,7 @@ test('on abcabcdefbcabcd$', function (t) {
 
 // Test all suffixes for a suffix tree
 function testSuffixes (tree, str, t) {
+  str += '\0'
   const suffixes = STree.allSuffixes(tree).sort(sortSuffixes)
   t.strictEqual(suffixes.length, str.length)
   suffixes.forEach(function (suff, idx) {
