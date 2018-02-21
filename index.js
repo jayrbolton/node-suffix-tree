@@ -8,13 +8,10 @@ STree.create = function create (str) {
   const root = createNode(0)
   const tree = {
     activeNode: root,
-    activeEdge: null,
-    activeEdgeIdx: null,
-    activeLength: 0,
-    skippedLength: 0,
-    skippedEdge: 0,
+    right: -1,
+    left: -1,
+    skip: 0,
     end: -1,
-    remainder: 0,
     root,
     text: '',
     _tag: 'STree'
@@ -28,13 +25,9 @@ STree.create = function create (str) {
   return tree
 }
 
-// In the visualization, pay attention to the green blocks
-// We need some kind 'skippedLength' that we subtract from total active length.
-
-// Add a character or string into the tree
 STree.add = function add (char, tree) {
   assert(tree && tree._tag === 'STree', 'pass in a tree')
-  assert(char, 'pass in a character or string')
+  assert(char && char.length, 'pass in a character or string')
   const debug = Debug('suffix-tree:add')
   // Add a multi-character string
   if (char.length > 1) {
@@ -44,111 +37,112 @@ STree.add = function add (char, tree) {
     return tree
   }
 
-  // Add a single character to the tree
+  debug('state', {l: tree.left, r: tree.right, skip: tree.skip, node: tree.activeNode.id, text: tree.text})
+  debug('ADD', char)
+  tree.right += 1
   tree.end += 1
-  tree.remainder += 1
   tree.text += char
   let prevInternalNode // For tracking suffix links
-  debug('NEW CHAR', char)
-  let looping = true // A flag to stop the while loop early
 
-  while (tree.remainder > 0 && looping) {
-    const activeLength = tree.activeLength - tree.skippedLength
-    if (activeLength) {
-      // get the active edge
-      const edge = tree.activeNode.children[tree.activeEdge]
-      // get the character at the active point
-      const activeChar = tree.text[edge.start + activeLength]
-      if (char === activeChar) {
-        debug('  MATCH', char)
-        // we have an internal character match; move the active point forward
-        tree.activeLength += 1
-        looping = false
+  while (tree.left + tree.skip < tree.right) {
+    let skipped = tree.left + tree.skip
+    debug({skipped})
+
+    // Try to skip forward to the next edge
+    if (skipped < tree.right) {
+      let edgeChar = tree.text[skipped + 1]
+      let edge = tree.activeNode.children[edgeChar]
+      if (edge) {
+        let edgeLen = getNodeLength(tree, edge)
+        let extension = tree.right - (tree.left + tree.skip)
+        debug({edgeLen})
+        debug({extension})
+        while (edgeLen < extension) {
+          tree.activeNode = edge
+          tree.skip += edgeLen
+          debug('SKIP!')
+          extension = tree.right - (tree.left + tree.skip)
+          if (!extension) break
+          edgeChar = tree.text[tree.left + tree.skip + 1]
+          edge = tree.activeNode.children[edgeChar]
+          if (!edge) break
+          edgeLen = getNodeLength(tree, edge)
+        }
+      }
+      debug({node: tree.activeNode.id})
+    }
+    const node = tree.activeNode
+
+    skipped = tree.left + tree.skip
+    let extension = tree.right - skipped - 1
+
+    // No extension
+    if (extension <= 0) {
+      if (node.children[char]) {
+        debug('MATCH')
+        return tree
       } else {
-        debug('  SPLIT internal node', edge.id)
-        // Perform an internal node split
+        // The edge does not exist; create a new leaf
+        debug('CREATE')
+        node.children[char] = createNode(tree.end)
+        tree.left += 1
+        tree.activeNode = tree.root
+        tree.skip = 0
+      }
+    } else {
+      const edgeChar = tree.text[skipped + 1]
+      debug({edgeChar})
+      const edge = node.children[edgeChar]
+      debug({edge: edge.id})
+      const extension = tree.right - skipped - 1
+      debug({extension})
+      const matchChar = tree.text[edge.start + extension]
+      debug({matchChar})
+      if (char === matchChar) {
+        debug('MATCH')
+        return tree
+      } else {
+        debug('SPLIT')
+        // Perform an internal node split at the matchChar
         // Create an ending for the current active edge
-        edge.end = edge.start + activeLength - 1
-        // Create two more child nodes
-        const childNode1 = createNode(tree.end)
-        const splitStart = edge.start + activeLength
-        const splitStartChar = tree.text[splitStart]
-        const childNode2 = createNode(splitStart)
-        if (edge.children[splitStartChar]) {
-          // If there are existing children, be sure to keep them as children
-          childNode2.children[splitStartChar] = edge.children[splitStartChar]
+        const endChild = createNode(tree.end) // create a child for char
+        const splitChild = createNode(edge.start + extension) // child for the split suffix
+        if (edge.end !== undefined) {
+          // The edge already has children
+          // splitChild gets all the children
+          debug('HAS CHILDREN', edge.children)
+          debug({start: edge.start, end: edge.end, id: edge.id})
+          debug({len: getNodeLength(tree, edge)})
+          debug(STree.format(tree))
+          const splitChildLength = getNodeLength(tree, edge) - extension
+          console.log({splitChildLength})
+          splitChild.end = splitChild.start + splitChildLength - 1
+          for (let childChar in edge.children) {
+            splitChild.children[childChar] = edge.children[childChar]
+            delete edge.children[childChar]
+          }
         }
-        if (edge.children[char]) {
-          childNode2.children[char] = edge.children[char]
-        }
-        edge.children[char] = childNode1
-        edge.children[splitStartChar] = childNode2
+        edge.end = edge.start + extension - 1
+        edge.children[char] = endChild
+        edge.children[matchChar] = splitChild
         // Link the edge node to any previously created internal node (suffix linking)
         if (prevInternalNode) {
           prevInternalNode.link = edge
         }
         prevInternalNode = edge
-        tree.remainder -= 1
-        tree.skippedLength = 0
-        tree.skippedEdge = 0
+        tree.activeNode = tree.activeNode.link || tree.root
         if (tree.activeNode === tree.root) {
-          debug('  SET ACTIVE LEN length after split')
-          tree.activeLength -= 1
-          tree.activeEdgeIdx += 1
-          tree.activeEdge = tree.text[tree.activeEdgeIdx]
+          tree.skip = 0
         } else {
-          tree.activeNode = tree.activeNode.link || tree.root
+          tree.skip -= 1
         }
-      }
-    } else {
-      if (tree.activeNode.children[char]) {
-        // Edge already exists
-        debug('  SET active point')
-        tree.activeLength += 1
-        tree.activeEdge = char
-        tree.activeEdgeIdx = tree.activeNode.children[char].start
-        looping = false
-      } else {
-        // Edge does not exist; create it
-        debug('  CREATE leaf', char)
-        // The edge does not exist; create a new leaf
-        tree.activeNode.children[char] = createNode(tree.end)
-        tree.remainder -= 1
-        tree.activeNode = tree.root
+        tree.left += 1
+        debug('state', {l: tree.left, r: tree.right, skip: tree.skip, node: tree.activeNode.id, text: tree.text})
       }
     }
-    jumpNode(tree)
-    debug(STree.format(tree))
-    debug({len: tree.activeLength, node: tree.activeNode.id, edge: tree.activeEdge, rem: tree.remainder, skipL: tree.skippedLength, skipE: tree.skippedEdge})
   }
 
-  if (tree.remainder === 0) {
-    // Remainder is now zero; always reset the activeEdge
-    tree.activeEdge = null
-    tree.activeEdgeIdx = null
-    tree.activeLength = 0
-  }
   return tree
-}
-
-// If our active point extends over another node, we want to move our active node and reduce our active length
-function jumpNode (tree) {
-  const debug = Debug('suffix-tree:add')
-  if (tree.activeLength) {
-    let edge = tree.activeNode.children[tree.activeEdge]
-    let edgeLen = getNodeLength(tree, edge)
-    while (edge && edgeLen <= (tree.activeLength - tree.skippedLength)) {
-      debug('  JUMP node')
-      tree.activeNode = edge
-      tree.skippedLength += edgeLen
-      // TODO set this to += edgeLen?
-      // Also make it a skipped value so we can restore the prev value?
-      tree.skippedEdge += edgeLen
-      tree.activeEdge = tree.text[tree.activeEdgeIdx + tree.skippedEdge]
-      edge = tree.activeNode.children[tree.activeEdge]
-      if (edge) edgeLen = getNodeLength(tree, edge)
-    }
-  }
 }
 
 // Get the length of the string represented by a node
@@ -221,4 +215,25 @@ STree.findSuffix = function findSuffix (suffix, tree) {
     i += nodeLen
   }
   return -1
+}
+
+// Return an array of arrays of ALL suffixes
+// Traverses every path of the tree -- O(n^2)
+STree.allSuffixes = function allSuffixes (tree) {
+  return allSuffixesRecur(tree, tree.root, '', [])
+}
+
+function allSuffixesRecur (tree, node, parentStr, arr) {
+  for (let char in node.children) {
+    let edge = node.children[char]
+    let substr = parentStr
+    if (edge.end === undefined) {
+      substr += tree.text.slice(edge.start)
+      arr.push(substr)
+    } else {
+      let nestedParentStr = parentStr + tree.text.slice(edge.start, edge.end + 1)
+      arr = allSuffixesRecur(tree, edge, nestedParentStr, arr)
+    }
+  }
+  return arr
 }
