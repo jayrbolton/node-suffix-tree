@@ -4,15 +4,15 @@ const STree = {}
 module.exports = STree
 
 STree.create = function create (str) {
-  const root = createNode(0)
+  const root = {id: 0, children: {}, start: 0}
   const tree = {
     activeNode: root,
+    root: root,
     right: -1,
     left: -1,
+    idx: -1, // the last string we have added
     skip: 0,
-    total: 0,
-    root,
-    text: '',
+    text: [],
     _tag: 'STree'
   }
   // Optionally start building the tree immediately
@@ -24,23 +24,23 @@ STree.create = function create (str) {
 
 // Add a new string to the tree
 STree.add = function add (str, tree) {
-  // Append the null character plus the idx of this string
-  str += '\0'
-  tree.total += 1
+  tree.idx += 1
   // Add a multi-character string
   for (let i = 0; i < str.length; ++i) {
-    STree.addChar(str[i], tree)
+    STree.addSingle(str[i], tree)
   }
+  STree.addSingle('$' + tree.idx, tree)
   return tree
 }
 
-// Add a single character to the tree
-STree.addChar = function addChar (char, tree) {
+// Add a single token to the tree
+// A token can be a character or a string, if you want to tree multiple chars as one token
+STree.addSingle = function addSingle (char, tree) {
   assert(tree && tree._tag === 'STree', 'pass in a tree')
   assert(char && char.length, 'pass in a character or string')
 
   tree.right += 1
-  tree.text += char
+  tree.text.push(char)
   let prevInternalNode // For tracking suffix links
 
   while (tree.left + tree.skip < tree.right) {
@@ -76,7 +76,7 @@ STree.addChar = function addChar (char, tree) {
         return tree
       } else {
         // The edge does not exist; create a new leaf
-        node.children[char] = createNode(tree.right)
+        node.children[char] = createNode(tree.right, tree)
         tree.left += 1
         tree.activeNode = tree.root
         tree.skip = 0
@@ -91,8 +91,8 @@ STree.addChar = function addChar (char, tree) {
       } else {
         // Perform an internal node split at the matchChar
         // Create an ending for the current active edge
-        const endChild = createNode(tree.right) // create a child for char
-        const splitChild = createNode(edge.start + extension) // child for the split suffix
+        const endChild = createNode(tree.right, tree) // create a child for char
+        const splitChild = createNode(edge.start + extension, tree) // child for the split suffix
         if (edge.end !== undefined) {
           // The edge already has children
           // splitChild gets all the children
@@ -104,6 +104,7 @@ STree.addChar = function addChar (char, tree) {
           }
         }
         edge.end = edge.start + extension - 1
+        delete edge.match
         edge.children[char] = endChild
         edge.children[matchChar] = splitChild
         // Link the edge node to any previously created internal node (suffix linking)
@@ -132,15 +133,16 @@ function getNodeLength (tree, node) {
 }
 
 // Create a node with a given start index
-function createNode (start) {
+function createNode (start, tree) {
   id += 1
-  return { start: start, children: {}, id }
+  return { start: start, children: {}, id, match: tree.idx }
 }
-let id = -1
+let id = 0
 
 // Convert a suffix tree into a formatted tree using indentations
 STree.format = function format (tree) {
-  let str = 'Full Text: ' + tree.text + '\n'
+  assert(tree && tree._tag === 'STree', 'pass in a tree')
+  let str = 'Full Text: ' + tree.text.join('') + '\n'
   let indentation = 0
   str += formatNode(tree, tree.root, indentation)
   return str
@@ -151,8 +153,9 @@ function formatNode (tree, node, indent) {
   let str = ''
   for (let char in node.children) {
     const childNode = node.children[char]
-    const end = childNode.end === undefined ? tree.right : childNode.end
-    const substr = tree.text.slice(childNode.start, end + 1)
+    let end = tree.right
+    if (childNode.end !== undefined) end = childNode.end
+    const substr = tree.text.slice(childNode.start, end + 1).join('')
     str += ' '.repeat(indent) + childNode.id + '. "' + substr + '" | ' + childNode.start + '-' + end
     if (childNode.link) {
       str += ' -> ' + childNode.link.id
@@ -167,28 +170,39 @@ STree.findSuffix = function findSuffix (suffix, tree) {
   assert(tree && tree._tag === 'STree', 'pass in a suffix-tree object')
   let node = tree.root
   let i = 0
-  let foundMatch
   while (i < suffix.length) {
     let firstChar = suffix[i]
-    if (!node.children[firstChar]) {
-      return -1
+    let child = node.children[firstChar]
+    if (!child) return []
+
+    let len = getNodeLength(tree, child)
+    for (let j = 1; j < len - 1; ++j) {
+      if (suffix[i + j] !== tree.text[child.start + j]) return []
     }
-    node = node.children[firstChar]
-    if (foundMatch === undefined) {
-      foundMatch = node.start
-    }
-    for (let j = node.start + 1; j <= node.end; ++j) {
-      if (suffix[i + j] !== tree.text[j]) {
-        return -1
+
+    // Check the final character
+    if (child.match !== undefined) {
+      return [child.match]
+    } else {
+      let finalChar = tree.text[child.start + len - 1]
+      if (finalChar !== suffix[i + len - 1]) {
+        return []
       }
     }
-    if (node.end === undefined) {
-      return foundMatch
-    }
-    const nodeLen = node.end + 1 - node.start
-    i += nodeLen
+
+    i += len
+    node = child
   }
-  return -1
+
+  let matches = []
+  // Check if any child nodes are matches of length 1
+  for (let char in node.children) {
+    let child = node.children[char]
+    if (child.match !== undefined && getNodeLength(tree, child) === 1) {
+      matches.push(child.match)
+    }
+  }
+  return matches
 }
 
 // Return an array of arrays of ALL suffixes
@@ -202,10 +216,10 @@ function allSuffixesRecur (tree, node, parentStr, arr) {
     let edge = node.children[char]
     let substr = parentStr
     if (edge.end === undefined) {
-      substr += tree.text.slice(edge.start)
+      substr += tree.text.slice(edge.start).join('')
       arr.push(substr)
     } else {
-      let nestedParentStr = parentStr + tree.text.slice(edge.start, edge.end + 1)
+      let nestedParentStr = parentStr + tree.text.slice(edge.start, edge.end + 1).join('')
       arr = allSuffixesRecur(tree, edge, nestedParentStr, arr)
     }
   }
