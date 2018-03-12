@@ -76,7 +76,7 @@ STree.addSingle = function addSingle (char, tree) {
         return tree
       } else {
         // The edge does not exist; create a new leaf
-        node.children[char] = createNode(tree.right, tree)
+        node.children[char] = createNode(tree.right, node, tree)
         tree.left += 1
         tree.activeNode = tree.root
         tree.skip = 0
@@ -91,8 +91,8 @@ STree.addSingle = function addSingle (char, tree) {
       } else {
         // Perform an internal node split at the matchChar
         // Create an ending for the current active edge
-        const endChild = createNode(tree.right, tree) // create a child for char
-        const splitChild = createNode(edge.start + extension, tree) // child for the split suffix
+        const endChild = createNode(tree.right, edge, tree) // create a child for char
+        const splitChild = createNode(edge.start + extension, edge, tree) // child for the split suffix
         if (edge.end !== undefined) {
           // The edge already has children
           // splitChild gets all the children
@@ -112,7 +112,11 @@ STree.addSingle = function addSingle (char, tree) {
           prevInternalNode.link = edge
         }
         prevInternalNode = edge
-        tree.activeNode = tree.activeNode.link || tree.root
+        if (!node.link || node.link.parent === tree.root) {
+          tree.activeNode = tree.root
+        } else {
+          tree.activeNode = node.link
+        }
         if (tree.activeNode === tree.root) {
           tree.skip = 0
         } else {
@@ -133,9 +137,9 @@ function getNodeLength (tree, node) {
 }
 
 // Create a node with a given start index
-function createNode (start, tree) {
+function createNode (start, parent, tree) {
   id += 1
-  return { start: start, children: {}, id, match: tree.idx }
+  return { start: start, children: {}, id, match: tree.idx, parent }
 }
 let id = 0
 

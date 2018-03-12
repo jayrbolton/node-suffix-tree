@@ -1,6 +1,8 @@
 const STree = require('..')
 const test = require('tape')
 
+require('./fuzz')
+
 test('on xyzxyaxyz', function (t) {
   const str = 'xyzxyaxyz'
   const tree = STree.create(str)
@@ -71,10 +73,10 @@ test('on abcabcdefbcabcd', function (t) {
   t.end()
 })
 
-// TODO -- fix
-test.skip('on abcabcdefbcabcd', function (t) {
-  const str = 'bananaplantain'
+test('on ananapan', function (t) {
+  const str = 'ananapan'
   const tree = STree.create(str)
+  // console.log(STree.format(tree))
   testSuffixes(tree, str, t)
   t.end()
 })
@@ -96,7 +98,7 @@ function testSuffixes (tree, str, t) {
   t.strictEqual(suffixes.length, str.length - 1)
   suffixes.forEach(function (suff, idx) {
     let correct = str.slice(str.length - idx - 2)
-    t.strictEqual(suff, correct, suff + ' vs ' + correct)
+    t.strictEqual(suff, correct, suff + ' vs ' + correct + ' (result vs expected)')
   })
 }
 
