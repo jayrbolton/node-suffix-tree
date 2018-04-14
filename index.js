@@ -3,13 +3,17 @@ const assert = require('assert')
 const STree = {}
 module.exports = STree
 
+// We don't separate nodes and edges; all are nodes
+// Nodes link to children nodes by a hash of names
+// Sometimes we refer to nodes as "edges", but they are just child nodes of some parent node
+
 STree.create = function create (str) {
   const root = {id: 0, children: {}, start: 0}
   const tree = {
     activeNode: root,
-    root: root,
-    right: -1,
-    left: -1,
+    root: root, // root node
+    left: -1, // current position pointer
+    right: -1, // look ahead pointer
     idx: -1, // the last string we have added
     skip: 0,
     text: [],
@@ -25,7 +29,7 @@ STree.create = function create (str) {
 // Add a new string to the tree
 STree.add = function add (str, tree) {
   tree.idx += 1
-  // Add a multi-character string
+  // Add each character individually
   for (let i = 0; i < str.length; ++i) {
     STree.addSingle(str[i], tree)
   }
@@ -34,7 +38,8 @@ STree.add = function add (str, tree) {
 }
 
 // Add a single token to the tree
-// A token can be a character or a string, if you want to tree multiple chars as one token
+// A token can be a character or a string
+// Tokens can be multi-character (mainly to denote string endings)
 STree.addSingle = function addSingle (char, tree) {
   assert(tree && tree._tag === 'STree', 'pass in a tree')
   assert(char && char.length, 'pass in a character or string')
@@ -46,7 +51,7 @@ STree.addSingle = function addSingle (char, tree) {
   while (tree.left + tree.skip < tree.right) {
     let skipped = tree.left + tree.skip
 
-    // Try to skip forward to the next edge
+    // Try to skip nodes if our extension goes beyond the edge length
     if (skipped < tree.right) {
       let edgeChar = tree.text[skipped + 1]
       let edge = tree.activeNode.children[edgeChar]
@@ -70,7 +75,7 @@ STree.addSingle = function addSingle (char, tree) {
     skipped = tree.left + tree.skip
     let extension = tree.right - skipped - 1
 
-    // No extension
+    // No extension/lookahead
     if (extension <= 0) {
       if (node.children[char]) {
         return tree
@@ -82,6 +87,7 @@ STree.addSingle = function addSingle (char, tree) {
         tree.skip = 0
       }
     } else {
+      // We have an extension/lookahead; we must match or split a node
       const edgeChar = tree.text[skipped + 1]
       const edge = node.children[edgeChar]
       const extension = tree.right - skipped - 1
@@ -104,7 +110,6 @@ STree.addSingle = function addSingle (char, tree) {
           }
         }
         edge.end = edge.start + extension - 1
-        delete edge.match
         edge.children[char] = endChild
         edge.children[matchChar] = splitChild
         // Link the edge node to any previously created internal node (suffix linking)
@@ -139,7 +144,7 @@ function getNodeLength (tree, node) {
 // Create a node with a given start index
 function createNode (start, parent, tree) {
   id += 1
-  return { start: start, children: {}, id, match: tree.idx, parent }
+  return { start: start, children: {}, id, parent }
 }
 let id = 0
 
@@ -169,44 +174,42 @@ function formatNode (tree, node, indent) {
   return str
 }
 
+// Find the starting indexes for a suffix in a tree, if it exists
+// Returns [] if there are no suffixes
 STree.findSuffix = function findSuffix (suffix, tree) {
-  assert(suffix && suffix.length, 'pass in a suffix string')
+  assert(typeof suffix === 'string' && suffix.length, 'pass in a suffix string')
   assert(tree && tree._tag === 'STree', 'pass in a suffix-tree object')
+  // Current node position
   let node = tree.root
   let i = 0
+  // We find the end of a suffix if:
+  // We have run through our full string
+  // The next character in the current node is a '$x' ending token
+  // Or the current node is ended, and there is at least one child edge with a '$x' ending token
   while (i < suffix.length) {
     let firstChar = suffix[i]
     let child = node.children[firstChar]
-    if (!child) return []
+    console.log('matched child:', firstChar)
+    if (!child) {
+      console.log('failed child:', firstChar)
+      return []
+    }
 
     let len = getNodeLength(tree, child)
     for (let j = 1; j < len - 1; ++j) {
-      if (suffix[i + j] !== tree.text[child.start + j]) return []
-    }
-
-    // Check the final character
-    if (child.match !== undefined) {
-      return [child.match]
-    } else {
-      let finalChar = tree.text[child.start + len - 1]
-      if (finalChar !== suffix[i + len - 1]) {
+      if (suffix[i + j] !== tree.text[child.start + j]) {
+        console.log('failed inner:', tree.text[child.start + j])
         return []
       }
+      console.log('matched inner:', tree.text[child.start + j])
     }
 
     i += len
     node = child
   }
+  console.log('final node:', node)
 
-  let matches = []
-  // Check if any child nodes are matches of length 1
-  for (let char in node.children) {
-    let child = node.children[char]
-    if (child.match !== undefined && getNodeLength(tree, child) === 1) {
-      matches.push(child.match)
-    }
-  }
-  return matches
+  return []
 }
 
 // Return an array of arrays of ALL suffixes

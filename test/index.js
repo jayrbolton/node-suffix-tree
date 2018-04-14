@@ -82,12 +82,16 @@ test('on ananapan', function (t) {
 })
 
 // TODO
-test.skip('generalized on abab and baba', function (t) {
+test.only('generalized on abab and baba', function (t) {
   const str1 = 'banana'
   const str2 = 'plantain'
   const tree = STree.create()
-  STree.add(str1 + str2, tree)
+  STree.add(str1, tree)
   console.log(STree.format(tree))
+  STree.add(str2, tree)
+  console.log(STree.format(tree))
+  console.log(STree.findSuffix('ana', tree))
+  console.log(STree.findSuffix('tain', tree))
   t.end()
 })
 
