@@ -37,7 +37,7 @@ Mutates the given tree and returns it.
 
 ```js
 const t = STree.create('banana')
-STree.add('plantain, t)
+STree.add('plantain', t)
 ```
 
 ### STree.format(tree)
@@ -64,7 +64,7 @@ Return the original string based on its index
 
 ```js
 const t = STree.create('banana')
-STree.add('plantain, t)
+STree.add('plantain', t)
 STree.getStringByIndex(0) // -> 'banana'
 STree.getStringByIndex(1) // -> 'plantain'
 ```
