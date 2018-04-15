@@ -1,7 +1,17 @@
 const STree = require('..')
 const test = require('tape')
 
-require('./fuzz')
+// require('./fuzz')
+
+test.only('what', function (t) {
+  const str1 = 'anax'
+  const str2 = 'ana'
+  const tr = STree.create()
+  STree.add(str1, tr)
+  STree.add(str2, tr)
+  console.log(STree.format(tr))
+  t.end()
+})
 
 test('on xyzxyaxyz', function (t) {
   const str = 'xyzxyaxyz'
@@ -76,22 +86,40 @@ test('on abcabcdefbcabcd', function (t) {
 test('on ananapan', function (t) {
   const str = 'ananapan'
   const tree = STree.create(str)
-  // console.log(STree.format(tree))
   testSuffixes(tree, str, t)
   t.end()
 })
 
-// TODO
-test.only('generalized on abab and baba', function (t) {
-  const str1 = 'banana'
-  const str2 = 'plantain'
+test('generalized suffix search', function (t) {
+  const str1 = 'train'
+  const str2 = 'plain'
+  const str3 = 'brain'
   const tree = STree.create()
   STree.add(str1, tree)
-  console.log(STree.format(tree))
   STree.add(str2, tree)
+  STree.add(str3, tree)
   console.log(STree.format(tree))
-  console.log(STree.findSuffix('ana', tree))
-  console.log(STree.findSuffix('tain', tree))
+  t.deepEqual(STree.findSuffix('brain', tree), [2])
+  t.deepEqual(STree.findSuffix('plain', tree), [1])
+  t.deepEqual(STree.findSuffix('train', tree), [0])
+  t.deepEqual(STree.findSuffix('rain', tree), [2, 0])
+  t.deepEqual(STree.findSuffix('lain', tree), [1])
+  t.deepEqual(STree.findSuffix('ain', tree), [1, 0, 2])
+  t.deepEqual(STree.findSuffix('in', tree), [1, 0, 2])
+  t.deepEqual(STree.findSuffix('n', tree), [1, 0, 2])
+  t.deepEqual(STree.findSuffix('', tree), [0, 1, 2])
+  t.end()
+})
+
+test('fetch string by index', function (t) {
+  const str1 = 'xyz'
+  const str2 = 'abc'
+  const tree = STree.create()
+  STree.add(str1, tree)
+  STree.add(str2, tree)
+  t.deepEqual(STree.getStringByIndex(0, tree), 'xyz')
+  t.deepEqual(STree.getStringByIndex(1, tree), 'abc')
+  t.throws(() => STree.getStringByIndex(2, tree))
   t.end()
 })
 

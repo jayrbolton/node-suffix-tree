@@ -15,6 +15,8 @@ STree.create = function create (str) {
     left: -1, // current position pointer
     right: -1, // look ahead pointer
     idx: -1, // the last string we have added
+    lastID: 0, // a node id incrementer
+    strings: {}, // save what strings are at what indexes
     skip: 0,
     text: [],
     _tag: 'STree'
@@ -28,7 +30,10 @@ STree.create = function create (str) {
 
 // Add a new string to the tree
 STree.add = function add (str, tree) {
+  assert(typeof str === 'string' && str.length, 'pass in a string')
+  assert(tree && tree._tag === 'STree', 'pass in a suffix-tree object')
   tree.idx += 1
+  tree.strings[tree.idx] = str
   // Add each character individually
   for (let i = 0; i < str.length; ++i) {
     STree.addSingle(str[i], tree)
@@ -42,7 +47,7 @@ STree.add = function add (str, tree) {
 // Tokens can be multi-character (mainly to denote string endings)
 STree.addSingle = function addSingle (char, tree) {
   assert(tree && tree._tag === 'STree', 'pass in a tree')
-  assert(char && char.length, 'pass in a character or string')
+  assert((typeof char === 'number') || (typeof char === 'string' && char.length), 'pass in a character or string')
 
   tree.right += 1
   tree.text.push(char)
@@ -143,10 +148,9 @@ function getNodeLength (tree, node) {
 
 // Create a node with a given start index
 function createNode (start, parent, tree) {
-  id += 1
-  return { start: start, children: {}, id, parent }
+  tree.lastID += 1
+  return { start: start, children: {}, id: tree.lastID, parent }
 }
-let id = 0
 
 // Convert a suffix tree into a formatted tree using indentations
 STree.format = function format (tree) {
@@ -174,46 +178,65 @@ function formatNode (tree, node, indent) {
   return str
 }
 
+STree.getStringByIndex = function getStringByIndex (idx, tree) {
+  const str = tree.strings[idx]
+  if (str === undefined) {
+    throw new Error('Undefined string for index ' + idx + '. Max is ' + tree.idx)
+  }
+  return str
+}
+
 // Find the starting indexes for a suffix in a tree, if it exists
 // Returns [] if there are no suffixes
 STree.findSuffix = function findSuffix (suffix, tree) {
-  assert(typeof suffix === 'string' && suffix.length, 'pass in a suffix string')
+  assert(typeof suffix === 'string', 'pass in a suffix string')
   assert(tree && tree._tag === 'STree', 'pass in a suffix-tree object')
+  suffix += '\0'
   // Current node position
   let node = tree.root
   let i = 0
   // We find the end of a suffix if:
   // We have run through our full string
-  // The next character in the current node is a '$x' ending token
-  // Or the current node is ended, and there is at least one child edge with a '$x' ending token
+  // The next character in the current node is a number end token
+  // Or the current node is ended, and there is at least one child edge with a number end token
   while (i < suffix.length) {
     let firstChar = suffix[i]
+    if (firstChar === '\0') {
+      let results = []
+      Object.keys(node.children).forEach(function (key) {
+        if (key[0] === '$' && key.length > 1) {
+          results.push(parseInt(key.slice(1)))
+        }
+      })
+      return results
+    }
     let child = node.children[firstChar]
-    console.log('matched child:', firstChar)
     if (!child) {
-      console.log('failed child:', firstChar)
       return []
     }
 
     let len = getNodeLength(tree, child)
-    for (let j = 1; j < len - 1; ++j) {
-      if (suffix[i + j] !== tree.text[child.start + j]) {
-        console.log('failed inner:', tree.text[child.start + j])
+    for (let j = 1; j < len; ++j) {
+      let currentChar = suffix[i + j]
+      let charToMatch = tree.text[child.start + j]
+      if (currentChar === '\0' && charToMatch[0] === '$' && charToMatch.length > 1) {
+        const idx = parseInt(charToMatch.slice(1))
+        // Successfully matched suffix!
+        return [idx]
+      } else if (currentChar !== charToMatch) {
+        // No match; failure
         return []
       }
-      console.log('matched inner:', tree.text[child.start + j])
     }
 
     i += len
     node = child
   }
-  console.log('final node:', node)
-
   return []
 }
 
 // Return an array of arrays of ALL suffixes
-// Traverses every path of the tree -- O(n^2)
+// Traverses every path of the tree
 STree.allSuffixes = function allSuffixes (tree) {
   return allSuffixesRecur(tree, tree.root, '', [])
 }
@@ -232,3 +255,33 @@ function allSuffixesRecur (tree, node, parentStr, arr) {
   }
   return arr
 }
+
+/*
+// TODO maybe keep track of what tokens belong to what strings
+// could keep another array that maps to the .text array called occurrences
+// each elem in occurences is an array of string indexes
+// Maybe this could clean up findSuffixes logic too
+// -- also, general function that traverses the tree given a string and returns the next token
+// Find all occurrences of a substring
+function findSubstrings (str, tree) {
+  // Need to:
+  // Traverse down the tree, just like findSuffixes (generalize this?)
+  // must match ALL corresponding characters
+  // up to the ln of `str`
+  // then, to find indexes:
+  //  continue traversin on any char until you hit an ending token
+  //  if you hit an inner end token, return that only 
+  //  if you hit a node branch, follow both branches and add both to results
+  for (let i = 0; i < str.length; ++i) {
+  }
+  // TODO
+}
+*/
+
+/*
+// Get the longest common substring among all strings in a tree
+function longestCommonSubstring (tree) {
+  // TODO
+  // Follow every child from root until you hit an ending token, either as a child or inner
+}
+*/
