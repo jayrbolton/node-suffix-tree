@@ -1,6 +1,6 @@
 # suffix-tree
 
-Suffix trees are useful for efficient string searching of suffixes and substrings. One big advantage is that you can search for the same suffix across many strings in linear time. This is an optimized implementation using Ukkonnen's algorithm and requires O(n) time and O(n) space to construct a tree for a string of length n.
+Suffix trees are useful for efficient string searching of suffixes and substrings. They're often used in bioinformatics on genomes. One big advantage is that you can search for the same suffix across many strings in linear time. This is an optimized implementation using Ukkonnen's algorithm and requires O(n) time and O(n) space to construct a tree for a string of length n.
 
 You can can check whether a string is a substring of another, whether a string is a suffix of another (starting from any point), the number of occurrences of a substring, or you can find the longest repeated substring. You can also do these operations on a set of multiple strings in linear time.
 
