@@ -10,6 +10,8 @@ test.only('what', function (t) {
   STree.add(str1, tr)
   STree.add(str2, tr)
   console.log(STree.format(tr))
+  console.log(tr.text)
+  console.log(tr.stringsAtToken)
   t.end()
 })
 

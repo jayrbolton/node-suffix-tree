@@ -8,6 +8,7 @@ module.exports = STree
 // Sometimes we refer to nodes as "edges", but they are just child nodes of some parent node
 
 STree.create = function create (str) {
+  // Root node is just a starting point; it does not represent a string
   const root = {id: 0, children: {}, start: 0}
   const tree = {
     activeNode: root,
@@ -17,6 +18,7 @@ STree.create = function create (str) {
     idx: -1, // the last string we have added
     lastID: 0, // a node id incrementer
     strings: {}, // save what strings are at what indexes
+    stringsAtToken: [], // save what strings are at what token indexes
     skip: 0,
     text: [],
     _tag: 'STree'
@@ -42,6 +44,9 @@ STree.add = function add (str, tree) {
   return tree
 }
 
+// We have a 
+// If we end 
+
 // Add a single token to the tree
 // A token can be a character or a string
 // Tokens can be multi-character (mainly to denote string endings)
@@ -52,6 +57,8 @@ STree.addSingle = function addSingle (char, tree) {
   tree.right += 1
   tree.text.push(char)
   let prevInternalNode // For tracking suffix links
+
+  tree.stringsAtToken[tree.right] = tree.idx
 
   while (tree.left + tree.skip < tree.right) {
     let skipped = tree.left + tree.skip
@@ -270,7 +277,7 @@ function findSubstrings (str, tree) {
   // up to the ln of `str`
   // then, to find indexes:
   //  continue traversin on any char until you hit an ending token
-  //  if you hit an inner end token, return that only 
+  //  if you hit an inner end token, return that only
   //  if you hit a node branch, follow both branches and add both to results
   for (let i = 0; i < str.length; ++i) {
   }
