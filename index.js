@@ -255,33 +255,3 @@ function allSuffixesRecur (tree, node, parentStr, arr) {
   }
   return arr
 }
-
-/*
-// TODO maybe keep track of what tokens belong to what strings
-// could keep another array that maps to the .text array called occurrences
-// each elem in occurences is an array of string indexes
-// Maybe this could clean up findSuffixes logic too
-// -- also, general function that traverses the tree given a string and returns the next token
-// Find all occurrences of a substring
-function findSubstrings (str, tree) {
-  // Need to:
-  // Traverse down the tree, just like findSuffixes (generalize this?)
-  // must match ALL corresponding characters
-  // up to the ln of `str`
-  // then, to find indexes:
-  //  continue traversin on any char until you hit an ending token
-  //  if you hit an inner end token, return that only 
-  //  if you hit a node branch, follow both branches and add both to results
-  for (let i = 0; i < str.length; ++i) {
-  }
-  // TODO
-}
-*/
-
-/*
-// Get the longest common substring among all strings in a tree
-function longestCommonSubstring (tree) {
-  // TODO
-  // Follow every child from root until you hit an ending token, either as a child or inner
-}
-*/

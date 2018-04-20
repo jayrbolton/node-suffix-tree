@@ -1,17 +1,7 @@
 const STree = require('..')
 const test = require('tape')
 
-// require('./fuzz')
-
-test.only('what', function (t) {
-  const str1 = 'anax'
-  const str2 = 'ana'
-  const tr = STree.create()
-  STree.add(str1, tr)
-  STree.add(str2, tr)
-  console.log(STree.format(tr))
-  t.end()
-})
+require('./fuzz')
 
 test('on xyzxyaxyz', function (t) {
   const str = 'xyzxyaxyz'
