@@ -1,6 +1,6 @@
 # suffix-tree
 
-Suffix trees are useful for efficient string searching of suffixes and substrings. They're often used in bioinformatics on genomes. One big advantage is that you can search for the same suffix across many strings in linear time. This is an optimized implementation using Ukkonnen's algorithm and requires O(n) time and O(n) space to construct a tree for a string of length n.
+Suffix trees are useful for efficient string searching of suffixes and substrings. They're often used in bioinformatics on genomes. One big advantage is that you can search for the same suffix across many strings in linear time. This is an optimized implementation using Ukkonen's algorithm and requires O(n) time and O(n) space to construct a tree for a string of length n.
 
 You can can check whether a string is a substring of another, whether a string is a suffix of another (starting from any point), the number of occurrences of a substring, or you can find the longest repeated substring. You can also do these operations on a set of multiple strings in linear time.
 
@@ -73,28 +73,6 @@ STree.getStringByIndex(1) // -> 'plantain'
 
 Return an array of arrays of ALL suffixes for the entire tree. Traverses every path of the tree
 
-### STree.longestCommonSubstring(tree)
-
-Get the longest common substring among all strings in a tree. Returns the actual string.
-
-```js
-const t = STree.create('plantain')
-STree.add('entertain', t)
-const s = STree.longestCommonSubstring(t) // -> 'tain'
-```
-
-### STree.findSubstrings(string, tree)
-
-Find all occurrences of a substring in any string in the tree. Returns an object where:
-* Each key in the object is an index to a string in the tree (use `getStringByIndex` to get the string)
-* Each value in the object is an array of starting indexes for the substring occurrences in the string
-
-```js
-const t = STree.create('banana')
-const occs = STree.findSubstrings('an', t) // -> {0: [1, 3]}
-// We found occurences in string 0 ('banana'), at starting indexes 1 and 3 inside 'banana'
-```
-
 ### Un-implemented functions
 
 Suffix trees have a lot of other efficient functions that can be written for them. See [the Wikipedia page](https://en.wikipedia.org/wiki/Suffix_tree#Functionality) for a comprehensive list of these functions. They could either be added to this module or created in independent modules.
@@ -109,9 +87,9 @@ $ npm install @jayrbolton/suffix-tree
 
 ## See Also
 
-- [Visualization of Ukkonnen's algorithm](brenden.github.io/ukkonen-animation/)
-- [Explanation of Ukkonnen's algorithm](https://stackoverflow.com/questions/9452701/ukkonens-suffix-tree-algorithm-in-plain-english/9513423#9513423)
-- [Wikipedia - Ukkonnen's algorithm](https://en.wikipedia.org/wiki/Suffix_tree)
+- [Visualization of Ukkonen's algorithm](brenden.github.io/ukkonen-animation/)
+- [Explanation of Ukkonen's algorithm](https://stackoverflow.com/questions/9452701/ukkonens-suffix-tree-algorithm-in-plain-english/9513423#9513423)
+- [Wikipedia - Ukkonen's algorithm](https://en.wikipedia.org/wiki/Suffix_tree)
 - [Wikipedia - Suffix Trees](https://en.wikipedia.org/wiki/Suffix_tree)
 
 ## License
