@@ -14,11 +14,11 @@
     "tape": "^4.8.0"
   },
   "bugs": {
-    "url": "https://github.com/jayrbolton/suffix-tree/issues"
+    "url": "https://github.com/jayrbolton/node-suffix-tree/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jayrbolton/suffix-tree.git"
+    "url": "https://github.com/jayrbolton/node-suffix-tree.git"
   },
   "scripts": {
     "test": "dependency-check package.json && standard && node test/",
